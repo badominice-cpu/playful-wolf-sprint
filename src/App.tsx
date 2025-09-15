@@ -8,6 +8,8 @@ import NotFound from "./pages/NotFound";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
 import ProtectedRoute from "./components/ProtectedRoute";
+import MainLayout from "./components/MainLayout";
+import Products from "./pages/Products";
 
 const queryClient = new QueryClient();
 
@@ -18,11 +20,15 @@ const App = () => (
       <Sonner />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
           
           <Route element={<ProtectedRoute />}>
-            <Route path="/dashboard" element={<Dashboard />} />
+            <Route element={<MainLayout />}>
+              <Route path="/" element={<Index />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/products" element={<Products />} />
+              {/* Adicione outras rotas protegidas aqui */}
+            </Route>
           </Route>
 
           <Route path="*" element={<NotFound />} />
