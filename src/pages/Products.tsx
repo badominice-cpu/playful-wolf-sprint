@@ -6,17 +6,19 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Skeleton } from '@/components/ui/skeleton';
 import { ProductForm } from '@/components/ProductForm';
+import { StockMovementForm } from '@/components/StockMovementForm';
 import { showError, showSuccess } from '@/utils/toast';
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isFormDialogOpen, setIsFormDialogOpen] = useState(false);
+  const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
@@ -42,7 +44,7 @@ const Products = () => {
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
-    setIsDialogOpen(true);
+    setIsFormDialogOpen(true);
   };
 
   const handleDeleteRequest = (product: Product) => {
@@ -64,7 +66,13 @@ const Products = () => {
   };
 
   const handleFormSave = () => {
-    setIsDialogOpen(false);
+    setIsFormDialogOpen(false);
+    setSelectedProduct(null);
+    fetchProducts();
+  }
+  
+  const handleMovementSave = () => {
+    setIsMovementDialogOpen(false);
     setSelectedProduct(null);
     fetchProducts();
   }
@@ -74,9 +82,9 @@ const Products = () => {
       <div className="flex items-center">
         <h1 className="text-lg font-semibold md:text-2xl">Produtos</h1>
         <div className="ml-auto flex items-center gap-2">
-          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+          <Dialog open={isFormDialogOpen} onOpenChange={(open) => {
             if (!open) setSelectedProduct(null);
-            setIsDialogOpen(open);
+            setIsFormDialogOpen(open);
           }}>
             <DialogTrigger asChild>
               <Button size="sm" className="h-8 gap-1">
@@ -152,7 +160,14 @@ const Products = () => {
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
                           <DropdownMenuItem onClick={() => handleEdit(product)}>Editar</DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => handleDeleteRequest(product)}>Excluir</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedProduct(product);
+                            setIsMovementDialogOpen(true);
+                          }}>
+                            Movimentar Estoque
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteRequest(product)}>Excluir</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -163,6 +178,21 @@ const Products = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <Dialog open={isMovementDialogOpen} onOpenChange={(open) => {
+        if (!open) setSelectedProduct(null);
+        setIsMovementDialogOpen(open);
+      }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Movimentar Estoque: {selectedProduct?.name}</DialogTitle>
+            <DialogDescription>
+              Registre uma entrada ou saída de estoque para este produto. O estoque atual é {selectedProduct?.current_stock}.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedProduct && <StockMovementForm product={selectedProduct} onSave={handleMovementSave} />}
+        </DialogContent>
+      </Dialog>
 
       <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
         <AlertDialogContent>

@@ -23,3 +23,12 @@ export interface Product {
   categories?: Category; // Para joins
   suppliers?: Supplier; // Para joins
 }
+
+export interface StockMovement {
+  id: string;
+  product_id: string;
+  type: 'entrada' | 'saida';
+  quantity: number;
+  notes?: string;
+  created_at: string;
+}
