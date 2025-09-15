@@ -12,6 +12,7 @@ import MainLayout from "./components/MainLayout";
 import Products from "./pages/Products";
 import Categories from "./pages/Categories";
 import Suppliers from "./pages/Suppliers";
+import StockMovements from "./pages/StockMovements";
 
 const queryClient = new QueryClient();
 
@@ -29,9 +30,9 @@ const App = () => (
               <Route path="/" element={<Index />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/products" element={<Products />} />
+              <Route path="/products/:productId/movements" element={<StockMovements />} />
               <Route path="/categories" element={<Categories />} />
               <Route path="/suppliers" element={<Suppliers />} />
-              {/* Adicione outras rotas protegidas aqui */}
             </Route>
           </Route>
 

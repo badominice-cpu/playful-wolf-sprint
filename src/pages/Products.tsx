@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { supabase } from '@/lib/supabase';
 import { Product } from '@/types';
 import { Button } from '@/components/ui/button';
@@ -21,6 +22,7 @@ const Products = () => {
   const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const navigate = useNavigate();
 
   const fetchProducts = async () => {
     setLoading(true);
@@ -165,6 +167,9 @@ const Products = () => {
                             setIsMovementDialogOpen(true);
                           }}>
                             Movimentar Estoque
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => navigate(`/products/${product.id}/movements`)}>
+                            Ver Histórico
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
                           <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteRequest(product)}>Excluir</DropdownMenuItem>
