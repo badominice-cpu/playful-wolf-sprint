@@ -22,7 +22,8 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-const unitOptions = ['UN', 'CX', 'PC', 'KG', 'M', 'RL'];
+// Lista de unidades ajustada. Se o erro persistir, esta lista precisa ser igual à da regra do banco de dados.
+const unitOptions = ['UN', 'CX', 'PC', 'KG', 'M'];
 
 interface ProductFormProps {
   product?: Product | null;
