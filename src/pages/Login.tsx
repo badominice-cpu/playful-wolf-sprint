@@ -13,7 +13,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSignUp, setIsSignUp] = useState(false); // State to toggle between Login and Sign Up
+  const [isSignUp, setIsSignUp] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,9 +41,20 @@ const Login = () => {
       showError(error.message);
     } else {
       showSuccess('Cadastro realizado! Verifique seu e-mail para confirmação.');
-      setIsSignUp(false); // Switch back to login view
+      setIsSignUp(false);
     }
     setLoading(false);
+  };
+
+  const handleGoogleLogin = async () => {
+    setLoading(true);
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+    });
+    if (error) {
+      showError(`Erro no login com Google: ${error.message}`);
+      setLoading(false);
+    }
   };
 
   return (
@@ -92,6 +103,23 @@ const Login = () => {
               {loading ? (isSignUp ? 'Cadastrando...' : 'Entrando...') : (isSignUp ? 'Cadastrar' : 'Entrar')}
             </Button>
           </form>
+
+          <div className="relative my-4">
+            <div className="absolute inset-0 flex items-center">
+              <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+              <span className="bg-card px-2 text-muted-foreground">
+                Ou continue com
+              </span>
+            </div>
+          </div>
+
+          <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
+            <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.37 1.62-3.82 1.62-4.74 0-8.58-3.84-8.58-8.58s3.84-8.58 8.58-8.58c2.69 0 4.52.99 5.6 2.02l2.58-2.58C20.26 2.49 17.13 1 12.48 1 5.88 1 1 5.88 1 12.48s4.88 11.48 11.48 11.48c3.47 0 6.23-1.17 8.2-3.25 2.02-2.02 2.64-5.02 2.64-7.92 0-.6-.05-1.18-.15-1.72H12.48z"></path></svg>
+            Google
+          </Button>
+
           <div className="mt-4 text-center text-sm">
             {isSignUp ? 'Já tem uma conta?' : 'Não tem uma conta?'}
             <Button variant="link" onClick={() => setIsSignUp(!isSignUp)} className="pl-1">
