@@ -16,11 +16,13 @@ const formSchema = z.object({
   sku: z.string().min(1, { message: 'O SKU é obrigatório.' }),
   category_id: z.string().uuid({ message: 'Selecione uma categoria válida.' }),
   supplier_id: z.string().uuid({ message: 'Selecione um fornecedor válido.' }),
-  unit: z.string().min(1, { message: 'A unidade é obrigatória (ex: UN, KG, PC).' }),
+  unit: z.string().min(1, { message: 'A unidade é obrigatória.' }),
   min_stock: z.coerce.number().int().min(0, { message: 'O estoque mínimo não pode ser negativo.' }),
-  current_stock: z.coerce.number().int().min(0, { message: 'O estoque atual не pode ser negativo.' }),
+  current_stock: z.coerce.number().int().min(0, { message: 'O estoque atual não pode ser negativo.' }),
   notes: z.string().optional(),
 });
+
+const unitOptions = ['UN', 'CX', 'PC', 'KG', 'M', 'RL'];
 
 interface ProductFormProps {
   product?: Product | null;
@@ -52,7 +54,7 @@ export const ProductForm = ({ product, onSave }: ProductFormProps) => {
       sku: product?.sku || '',
       category_id: product?.category_id || undefined,
       supplier_id: product?.supplier_id || undefined,
-      unit: product?.unit || '',
+      unit: product?.unit || undefined,
       min_stock: product?.min_stock || 0,
       current_stock: product?.current_stock || 0,
       notes: product?.notes || '',
@@ -145,9 +147,16 @@ export const ProductForm = ({ product, onSave }: ProductFormProps) => {
             )} />
             <FormField control={form.control} name="unit" render={({ field }) => (
                 <FormItem>
-                <FormLabel>Unidade</FormLabel>
-                <FormControl><Input placeholder="UN, PC, KG" {...field} /></FormControl>
-                <FormMessage />
+                  <FormLabel>Unidade</FormLabel>
+                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                      <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                      {unitOptions.map(unit => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                  <FormMessage />
                 </FormItem>
             )} />
         </div>
