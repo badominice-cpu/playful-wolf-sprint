@@ -7,45 +7,95 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Badge } from '@/components/ui/badge';
 import { MoreHorizontal, PlusCircle } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
 import { Skeleton } from '@/components/ui/skeleton';
+import { ProductForm } from '@/components/ProductForm';
+import { showError, showSuccess } from '@/utils/toast';
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isAlertOpen, setIsAlertOpen] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+
+  const fetchProducts = async () => {
+    setLoading(true);
+    const { data, error } = await supabase
+      .from('products')
+      .select(`*, categories ( name ), suppliers ( name )`)
+      .order('name');
+
+    if (error) {
+      showError('Erro ao buscar produtos.');
+      console.error(error);
+    } else {
+      setProducts(data as any);
+    }
+    setLoading(false);
+  };
 
   useEffect(() => {
-    const fetchProducts = async () => {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          categories ( name ),
-          suppliers ( name )
-        `);
-
-      if (error) {
-        console.error('Error fetching products:', error);
-      } else {
-        setProducts(data as any);
-      }
-      setLoading(false);
-    };
-
     fetchProducts();
   }, []);
+
+  const handleEdit = (product: Product) => {
+    setSelectedProduct(product);
+    setIsDialogOpen(true);
+  };
+
+  const handleDeleteRequest = (product: Product) => {
+    setSelectedProduct(product);
+    setIsAlertOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!selectedProduct) return;
+    const { error } = await supabase.from('products').delete().eq('id', selectedProduct.id);
+    if (error) {
+      showError('Erro ao excluir produto.');
+    } else {
+      showSuccess('Produto excluído com sucesso!');
+      fetchProducts();
+    }
+    setIsAlertOpen(false);
+    setSelectedProduct(null);
+  };
+
+  const handleFormSave = () => {
+    setIsDialogOpen(false);
+    setSelectedProduct(null);
+    fetchProducts();
+  }
 
   return (
     <>
       <div className="flex items-center">
         <h1 className="text-lg font-semibold md:text-2xl">Produtos</h1>
         <div className="ml-auto flex items-center gap-2">
-            <Button size="sm" className="h-8 gap-1">
+          <Dialog open={isDialogOpen} onOpenChange={(open) => {
+            if (!open) setSelectedProduct(null);
+            setIsDialogOpen(open);
+          }}>
+            <DialogTrigger asChild>
+              <Button size="sm" className="h-8 gap-1">
                 <PlusCircle className="h-3.5 w-3.5" />
                 <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
-                    Adicionar Produto
+                  Adicionar Produto
                 </span>
-            </Button>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-[625px]">
+              <DialogHeader>
+                <DialogTitle>{selectedProduct ? 'Editar Produto' : 'Adicionar Produto'}</DialogTitle>
+                <DialogDescription>
+                  {selectedProduct ? 'Altere os dados do produto.' : 'Preencha os dados do novo produto.'}
+                </DialogDescription>
+              </DialogHeader>
+              <ProductForm product={selectedProduct} onSave={handleFormSave} />
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
       <Card>
@@ -64,9 +114,7 @@ const Products = () => {
                 <TableHead className="hidden md:table-cell">Estoque</TableHead>
                 <TableHead className="hidden md:table-cell">Status</TableHead>
                 <TableHead className="hidden md:table-cell">Categoria</TableHead>
-                <TableHead>
-                  <span className="sr-only">Ações</span>
-                </TableHead>
+                <TableHead><span className="sr-only">Ações</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -103,8 +151,8 @@ const Products = () => {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Ações</DropdownMenuLabel>
-                          <DropdownMenuItem>Editar</DropdownMenuItem>
-                          <DropdownMenuItem>Excluir</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleEdit(product)}>Editar</DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteRequest(product)}>Excluir</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -115,6 +163,22 @@ const Products = () => {
           </Table>
         </CardContent>
       </Card>
+
+      <AlertDialog open={isAlertOpen} onOpenChange={setIsAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Você tem certeza?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Essa ação não pode ser desfeita. Isso excluirá permanentemente o produto
+              "{selectedProduct?.name}".
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel onClick={() => setSelectedProduct(null)}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete}>Continuar</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 };
