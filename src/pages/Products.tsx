@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { MoreHorizontal, PlusCircle } from 'lucide-react';
+import { MoreHorizontal, PlusCircle, Search } from 'lucide-react';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog"
@@ -14,6 +14,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { ProductForm } from '@/components/ProductForm';
 import { StockMovementForm } from '@/components/StockMovementForm';
 import { showError, showSuccess } from '@/utils/toast';
+import { Input } from '@/components/ui/input';
 
 const Products = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -22,27 +23,40 @@ const Products = () => {
   const [isMovementDialogOpen, setIsMovementDialogOpen] = useState(false);
   const [isAlertOpen, setIsAlertOpen] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const navigate = useNavigate();
 
-  const fetchProducts = async () => {
-    setLoading(true);
-    const { data, error } = await supabase
-      .from('products')
-      .select(`*, categories ( name ), suppliers ( name )`)
-      .order('name');
-
-    if (error) {
-      showError('Erro ao buscar produtos.');
-      console.error(error);
-    } else {
-      setProducts(data as any);
-    }
-    setLoading(false);
-  };
-
   useEffect(() => {
-    fetchProducts();
-  }, []);
+    const fetchProducts = async () => {
+      setLoading(true);
+      let query = supabase
+        .from('products')
+        .select(`*, categories ( name ), suppliers ( name )`);
+
+      if (searchTerm) {
+        query = query.or(`name.ilike.%${searchTerm}%,sku.ilike.%${searchTerm}%`);
+      }
+
+      const { data, error } = await query.order('name');
+
+      if (error) {
+        showError('Erro ao buscar produtos.');
+        console.error(error);
+      } else {
+        setProducts(data as any);
+      }
+      setLoading(false);
+    };
+
+    // Debounce a busca para evitar chamadas excessivas à API
+    const handler = setTimeout(() => {
+      fetchProducts();
+    }, 300);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [searchTerm]);
 
   const handleEdit = (product: Product) => {
     setSelectedProduct(product);
@@ -61,7 +75,7 @@ const Products = () => {
       showError('Erro ao excluir produto.');
     } else {
       showSuccess('Produto excluído com sucesso!');
-      fetchProducts();
+      setSearchTerm(''); // Limpa a busca para recarregar a lista
     }
     setIsAlertOpen(false);
     setSelectedProduct(null);
@@ -70,18 +84,18 @@ const Products = () => {
   const handleFormSave = () => {
     setIsFormDialogOpen(false);
     setSelectedProduct(null);
-    fetchProducts();
+    setSearchTerm(''); // Limpa a busca para recarregar a lista
   }
   
   const handleMovementSave = () => {
     setIsMovementDialogOpen(false);
     setSelectedProduct(null);
-    fetchProducts();
+    setSearchTerm(''); // Limpa a busca para recarregar a lista
   }
 
   return (
     <>
-      <div className="flex items-center">
+      <div className="flex items-center mb-4">
         <h1 className="text-lg font-semibold md:text-2xl">Produtos</h1>
         <div className="ml-auto flex items-center gap-2">
           <Dialog open={isFormDialogOpen} onOpenChange={(open) => {
@@ -91,7 +105,7 @@ const Products = () => {
             <DialogTrigger asChild>
               <Button size="sm" className="h-8 gap-1">
                 <PlusCircle className="h-3.5 w-3.5" />
-                <span className="sr-only sm:not-sr-only sm:whitespace-nowrap">
+                <span className="sr-only sm:not-sr-only sm:whitespace-rap">
                   Adicionar Produto
                 </span>
               </Button>
@@ -114,6 +128,16 @@ const Products = () => {
           <CardDescription>
             Gerencie suas embalagens e visualize o estoque atual.
           </CardDescription>
+          <div className="relative mt-4">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              type="search"
+              placeholder="Buscar por nome ou SKU..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="w-full rounded-lg bg-background pl-8 md:w-[200px] lg:w-[336px]"
+            />
+          </div>
         </CardHeader>
         <CardContent>
           <Table>
