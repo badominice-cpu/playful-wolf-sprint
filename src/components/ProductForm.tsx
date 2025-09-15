@@ -22,8 +22,8 @@ const formSchema = z.object({
   notes: z.string().optional(),
 });
 
-// Lista de unidades ajustada. Se o erro persistir, esta lista precisa ser igual à da regra do banco de dados.
-const unitOptions = ['UN', 'CX', 'PC', 'KG', 'M'];
+// Lista de unidades corrigida para corresponder à regra do banco de dados.
+const unitOptions = ['cx', 'pct', 'un', 'kg', 'l', 'm'];
 
 interface ProductFormProps {
   product?: Product | null;
@@ -154,7 +154,7 @@ export const ProductForm = ({ product, onSave }: ProductFormProps) => {
                       <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                     </FormControl>
                     <SelectContent>
-                      {unitOptions.map(unit => <SelectItem key={unit} value={unit}>{unit}</SelectItem>)}
+                      {unitOptions.map(unit => <SelectItem key={unit} value={unit}>{unit.toUpperCase()}</SelectItem>)}
                     </SelectContent>
                   </Select>
                   <FormMessage />
