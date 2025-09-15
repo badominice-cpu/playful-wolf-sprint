@@ -13,6 +13,7 @@ const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSignUp, setIsSignUp] = useState(false); // State to toggle between Login and Sign Up
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,6 +29,23 @@ const Login = () => {
     setLoading(false);
   };
 
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+
+    if (error) {
+      showError(error.message);
+    } else {
+      showSuccess('Cadastro realizado! Verifique seu e-mail para confirmação.');
+      setIsSignUp(false); // Switch back to login view
+    }
+    setLoading(false);
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 dark:bg-gray-900 p-4">
       <Card className="w-full max-w-sm">
@@ -35,11 +53,15 @@ const Login = () => {
           <div className="flex justify-center items-center mb-4">
             <Package className="h-12 w-12 text-primary" />
           </div>
-          <CardTitle className="text-2xl font-bold">Jadson</CardTitle>
-          <CardDescription>Controle de Estoque de Embalagens</CardDescription>
+          <CardTitle className="text-2xl font-bold">
+            {isSignUp ? 'Criar Conta' : 'Jadson'}
+          </CardTitle>
+          <CardDescription>
+            {isSignUp ? 'Preencha os campos para se cadastrar.' : 'Controle de Estoque de Embalagens'}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleLogin}>
+          <form onSubmit={isSignUp ? handleSignUp : handleLogin}>
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="email">Email</Label>
@@ -67,9 +89,15 @@ const Login = () => {
               </div>
             </div>
             <Button type="submit" className="w-full mt-6" disabled={loading}>
-              {loading ? 'Entrando...' : 'Entrar'}
+              {loading ? (isSignUp ? 'Cadastrando...' : 'Entrando...') : (isSignUp ? 'Cadastrar' : 'Entrar')}
             </Button>
           </form>
+          <div className="mt-4 text-center text-sm">
+            {isSignUp ? 'Já tem uma conta?' : 'Não tem uma conta?'}
+            <Button variant="link" onClick={() => setIsSignUp(!isSignUp)} className="pl-1">
+              {isSignUp ? 'Entrar' : 'Cadastre-se'}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
